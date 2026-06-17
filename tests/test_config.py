@@ -3,7 +3,7 @@ import config
 
 def test_core_constants():
     assert config.LEAGUE_ID == 1
-    assert config.SEASON == 2026
+    assert isinstance(config.SEASON, int) and config.SEASON >= 2022
     assert config.DAILY_QUOTA == 100
     assert config.PER_MIN == 10
 

@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 LEAGUE_ID = 1
-SEASON = 2026
+# 賽季可由 .env 的 WC_SEASON 覆寫。預設 2022（卡達世界盃；API-Football 免費方案
+# 僅開放 2022–2024）。升級付費方案後改 .env 設 WC_SEASON=2026 即可切換，不需動程式。
+SEASON = int(os.getenv("WC_SEASON", "2022"))
 
 DAILY_QUOTA = 100
 PER_MIN = 10
