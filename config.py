@@ -37,7 +37,7 @@ STAR_JSON_PATH = DATA_DIR / "star_players.json"
 API_BASE = "https://v3.football.api-sports.io"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 # 驅動所有 agent 的模型，可由 .env 覆寫。
-OPENAI_DEFAULT_MODEL = os.getenv("OPENAI_DEFAULT_MODEL", "gpt-4.1-nano")
+OPENAI_DEFAULT_MODEL = os.getenv("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")
 APIFOOTBALL_KEY = os.getenv("APIFOOTBALL_KEY", "")
 TAVILY_KEY = os.getenv("TAVILY_KEY", "")
 
