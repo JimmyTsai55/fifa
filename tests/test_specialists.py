@@ -13,3 +13,10 @@ def test_specialists_have_expected_tools():
 def test_specialists_named():
     assert specialists.squad_agent.name == "Squad"
     assert specialists.star_agent.name == "Star"
+
+
+def test_specialists_use_configured_model():
+    import config
+    for a in (specialists.squad_agent, specialists.fixture_agent,
+              specialists.star_agent, specialists.insight_agent):
+        assert a.model == config.OPENAI_DEFAULT_MODEL
