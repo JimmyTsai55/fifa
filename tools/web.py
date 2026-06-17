@@ -11,8 +11,10 @@ def search(query: str, domains: list[str] | None = None) -> list[dict]:
         "max_results": 5,
         "include_domains": domains or config.NEWS_DOMAINS,
     }
-    r = httpx.post("https://api.tavily.com/search", json=payload,
-                   headers={"Content-Type": "application/json"})
+    r = httpx.post(
+        "https://api.tavily.com/search", json=payload,
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"Bearer {config.TAVILY_KEY}"})
     data = r.json()
     return [{"title": x["title"], "url": x["url"], "content": x["content"]}
             for x in data.get("results", [])]

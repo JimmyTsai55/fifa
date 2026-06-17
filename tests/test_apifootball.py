@@ -31,6 +31,24 @@ def test_request_blocked_when_quota_zero(conn, monkeypatch):
         af._request(conn, "2026-06-17", "/teams", {"league": 1})
 
 
+def test_request_raises_on_200_with_errors_body(conn, monkeypatch):
+    # API-Football 認證錯誤 → HTTP 200 + 非空 errors，必須擋下不快取
+    def fake_get(url, params):
+        return 200, {"errors": {"token": "invalid key"}, "response": []}, \
+               {"x-ratelimit-requests-remaining": "41"}
+    monkeypatch.setattr(af, "_http_get", fake_get)
+    with pytest.raises(RuntimeError, match="errors"):
+        af._request(conn, "2026-06-17", "/teams", {"league": 1})
+
+
+def test_request_ok_when_errors_empty_list(conn, monkeypatch):
+    # 成功時 errors 為空 list，不應誤判
+    def fake_get(url, params):
+        return 200, {"errors": [], "response": [{"id": 1}]}, {}
+    monkeypatch.setattr(af, "_http_get", fake_get)
+    assert af._request(conn, "2026-06-17", "/teams", {"league": 1}) == [{"id": 1}]
+
+
 def test_live_ttl_divides_remaining_window(conn):
     # 還剩 7200s 到午夜、保留 80 配額 → 90s
     ttl = af.live_ttl(seconds_to_reset=7200, reserved_quota=80)

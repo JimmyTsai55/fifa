@@ -33,6 +33,11 @@ def _request(conn, today: str, path: str, params: dict):
     quota.record_response(conn, today, hdrs)
     if status != 200:
         raise RuntimeError(f"API {status}: {body}")
+    # API-Football 在認證/參數錯誤時回 HTTP 200 + 非空 errors。
+    # 必須在快取前攔截，否則空結果會被當成功快取（teams 最長 30 天）。
+    errs = body.get("errors")
+    if errs:
+        raise RuntimeError(f"API errors: {errs}")
     return body.get("response", [])
 
 
@@ -56,24 +61,34 @@ def _teams():
                    {"league": config.LEAGUE_ID, "season": config.SEASON})
 
 
+_BAD_TEAM = [{"error": "無效的 team_id；請先用 resolve_entity + tool_find_team "
+              "取得有效 id，或先執行 init_db.py 初始化隊伍資料。"}]
+
+
 def _squad(team_id: int):
+    if team_id <= 0:
+        return list(_BAD_TEAM)
     return _cached(f"squad:{team_id}", config.TTL["squad"],
                    "/players/squads", {"team": team_id})
 
 
 def _find_team_id(name: str):
-    """從已快取的 teams 清單，用名稱找 team_id（resolve_entity 之後的橋）。"""
-    for t in _teams():
-        if name.lower() == t["team"]["name"].lower():
+    """從已快取的 teams 清單，用名稱找 team_id（resolve_entity 之後的橋）。
+    teams 快取為空（未初始化）時回 None。"""
+    teams = _teams()
+    lname = name.lower()
+    for t in teams:
+        if lname == t["team"]["name"].lower():
             return t["team"]["id"]
-    # 退一步：包含匹配
-    for t in _teams():
-        if name.lower() in t["team"]["name"].lower():
+    for t in teams:  # 退一步：包含匹配
+        if lname in t["team"]["name"].lower():
             return t["team"]["id"]
     return None
 
 
 def _player_stats(team_id: int):
+    if team_id <= 0:
+        return list(_BAD_TEAM)
     return _cached(f"players:{team_id}", config.TTL["squad"], "/players",
                    {"team": team_id, "season": config.SEASON})
 
@@ -92,6 +107,8 @@ def _standings(group: str | None = None):
 
 
 def _injuries(team_id: int):
+    if team_id <= 0:
+        return list(_BAD_TEAM)
     return _cached(f"injuries:{team_id}", config.TTL["injuries"], "/injuries",
                    {"team": team_id, "season": config.SEASON})
 
