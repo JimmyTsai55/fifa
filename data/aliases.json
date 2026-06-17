@@ -1,0 +1,6 @@
+{
+  "teams": {"阿根廷": "Argentina", "巴西": "Brazil", "法國": "France",
+            "德國": "Germany", "西班牙": "Spain", "英格蘭": "England"},
+  "players": {"梅西": {"name": "Messi", "team": "Argentina"},
+              "姆巴佩": {"name": "Mbappe", "team": "France"}}
+}
