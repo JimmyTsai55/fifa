@@ -1,0 +1,83 @@
+name: Deploy to Cloud Run
+
+# push 到 main → 先過測試 → 自動部署到 Cloud Run
+on:
+  push:
+    branches: [main]
+
+# 同一時間只跑一條部署，後到的取消前一條，避免互相覆蓋
+concurrency:
+  group: deploy-cloud-run
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: your-project
+  REGION: asia-east1
+  SERVICE: fifa-wc-agent
+
+jobs:
+  # ---- 1) 測試閘門：沒過就不部署 ----
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - run: python -m pytest -q
+
+  # ---- 2) 部署：用 WIF 無金鑰認證 + gcloud run deploy --source ----
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # WIF 取得 OIDC token 必要
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${GCP_WIF_PROVIDER}
+          service_account: ${GCP_SERVICE_ACCOUNT}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        # 參數對齊 gcp_Dev.sh 的 Step-5：
+        #   --max-instances 1 是配額正確性所必需（SQLite 為唯一的每日配額儲存）。
+        #   --allow-unauthenticated：Cloud Run 層不擋，由 app 自身的 X-API-Key middleware 驗證。
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --source . \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --platform managed \
+            --port 8887 \
+            --cpu 1 \
+            --memory 1Gi \
+            --min-instances 0 \
+            --max-instances 1 \
+            --timeout 180s \
+            --concurrency 50 \
+            --update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,APIFOOTBALL_KEY=APIFOOTBALL_KEY:latest,TAVILY_KEY=TAVILY_KEY:latest,WC_API_KEYS=WC_API_KEYS:latest \
+            --set-env-vars=OPENAI_DEFAULT_MODEL=gpt-4o-mini,WC_SEASON=2022,STORAGE_BACKEND=sqlite \
+            --allow-unauthenticated
+
+      - name: Smoke test (/healthz returns 200)
+        run: |
+          URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
+          echo "Service URL: $URL"
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL/healthz" || true)
+          echo "GET /healthz -> HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "Smoke test FAILED (expected 200, got $code)"; exit 1
+          fi
+          echo "Service is up ✅"
