@@ -74,9 +74,11 @@ curl -H "X-API-Key: <your-api-key>" \
    echo -n "key1,key2"         | gcloud secrets create WC_API_KEYS      --data-file=-
    ```
 
-2. 填入 `gcp_Dev.sh` 頂部的 `project_id`、`image_name`、`service_name`、`service_account`，然後執行：
+2. 複製範本並填入你的部署設定（`gcp_Dev.sh` 已被 `.gitignore`，含環境專屬設定不進版控）：
 
    ```bash
+   cp gcp_Dev.sh.example gcp_Dev.sh
+   # 填入 gcp_Dev.sh 頂部的 project_id、image_name、service_name、service_account
    bash gcp_Dev.sh
    ```
 
