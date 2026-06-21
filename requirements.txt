@@ -1,7 +1,6 @@
 openai-agents
 openai
 httpx
-python-dotenv
 pytest
 fastapi
 uvicorn[standard]

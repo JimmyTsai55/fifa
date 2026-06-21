@@ -1,4 +1,4 @@
-from typing import Protocol, Callable, Any
+from typing import Protocol, Callable
 
 
 class CacheStoreProtocol(Protocol):
