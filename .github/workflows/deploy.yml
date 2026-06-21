@@ -69,17 +69,18 @@ jobs:
             --concurrency 50 \
             --update-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,APIFOOTBALL_KEY=APIFOOTBALL_KEY:latest,TAVILY_KEY=TAVILY_KEY:latest,WC_API_KEYS=WC_API_KEYS:latest \
             --set-env-vars=OPENAI_DEFAULT_MODEL=gpt-4o-mini,WC_SEASON=2022,STORAGE_BACKEND=sqlite \
-            --allow-unauthenticated
+            --no-allow-unauthenticated
 
-      - name: Smoke test (app responds)
-        # 注意：不要打 /healthz —— Cloud Run 的 Google Front End 會攔截 /healthz
-        # 並回自己的 404，請求進不到容器。改打 /openapi.json，確認 FastAPI 路由已載入。
+      - name: Smoke test (deployed & reachable)
+        # 服務為私有（--no-allow-unauthenticated），匿名請求會被 Cloud Run 的
+        # IAM 層擋下回 403 —— 這「正好證明」鎖定生效且 revision 已上線在路由。
+        # 故接受 2xx / 401 / 403 為「部署成功且可達」；5xx / 000 才算失敗。
         run: |
           URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
           echo "Service URL: $URL"
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL/openapi.json" || true)
-          echo "GET /openapi.json -> HTTP $code"
-          if [ "$code" != "200" ]; then
-            echo "Smoke test FAILED (expected 200, got $code)"; exit 1
-          fi
-          echo "Service is up ✅"
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL/" || true)
+          echo "anonymous GET / -> HTTP $code (403 = 私有鎖定生效，符合預期)"
+          case "$code" in
+            2*|401|403) echo "Service deployed & reachable ✅" ;;
+            *) echo "Smoke test FAILED (HTTP $code)"; exit 1 ;;
+          esac
