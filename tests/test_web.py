@@ -1,4 +1,4 @@
-import tools.web as w
+import adapters.news_adapter as w
 
 
 def test_web_search_passes_domains(monkeypatch):

@@ -1,10 +1,10 @@
 from agents import Agent          # OpenAI Agents SDK
 from wc_agents import prompts     # 本地 prompt 模組
 import config
-from tools.resolve import resolve_entity
-from tools.web import web_search
-from tools.stars import get_star_profile
-from tools.apifootball import (
+from adapters.resolve_adapter import resolve_entity
+from adapters.news_adapter import web_search
+from adapters.stars_adapter import get_star_profile
+from adapters.agent_tools import (
     tool_find_team, tool_get_squad, tool_get_player_stats, tool_get_fixtures,
     tool_get_standings, tool_get_injuries, tool_get_live,
 )
