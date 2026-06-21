@@ -5,3 +5,5 @@ __pycache__/
 data/cache.db
 .pytest_cache/
 gcp_Dev.sh
+data/cache.db-shm
+data/cache.db-wal
