@@ -52,3 +52,21 @@ def test_ask_quota_exhausted_429(client):
     r = client.post("/ask", json={"question": "boom"},
                     headers={"X-API-Key": "secret"})
     assert r.status_code == 429
+
+
+def test_index_serves_html(client):
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "text/html" in r.headers["content-type"]
+    assert "FIFA" in r.text
+
+
+def test_chat_no_auth_happy_path(client):
+    r = client.post("/chat", json={"question": "hi"})
+    assert r.status_code == 200
+    assert r.json() == {"answer": "A:hi", "model": "test-model"}
+
+
+def test_chat_quota_exhausted_429(client):
+    r = client.post("/chat", json={"question": "boom"})
+    assert r.status_code == 429
