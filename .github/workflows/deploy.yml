@@ -71,12 +71,14 @@ jobs:
             --set-env-vars=OPENAI_DEFAULT_MODEL=gpt-4o-mini,WC_SEASON=2022,STORAGE_BACKEND=sqlite \
             --allow-unauthenticated
 
-      - name: Smoke test (/healthz returns 200)
+      - name: Smoke test (app responds)
+        # 注意：不要打 /healthz —— Cloud Run 的 Google Front End 會攔截 /healthz
+        # 並回自己的 404，請求進不到容器。改打 /openapi.json，確認 FastAPI 路由已載入。
         run: |
           URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
           echo "Service URL: $URL"
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL/healthz" || true)
-          echo "GET /healthz -> HTTP $code"
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL/openapi.json" || true)
+          echo "GET /openapi.json -> HTTP $code"
           if [ "$code" != "200" ]; then
             echo "Smoke test FAILED (expected 200, got $code)"; exit 1
           fi
