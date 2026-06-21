@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class QuotaStoreProtocol(Protocol):
+    def remaining(self) -> int: ...
+    def record_response(self, headers: dict) -> None: ...
