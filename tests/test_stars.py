@@ -1,4 +1,4 @@
-import tools.stars as s
+import adapters.stars_adapter as s
 
 
 def test_load_and_find_by_alias(tmp_path, monkeypatch):

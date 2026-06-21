@@ -1,4 +1,4 @@
-import tools.resolve as r
+import adapters.resolve_adapter as r
 
 
 def test_resolve_known_team():
