@@ -44,21 +44,43 @@ python init_db.py
 
 老將/新秀分類與看點故事不在 API 內，改在 **Claude Code** 內開一個 agent，依 [`build_stars.md`](build_stars.md) 的指示用 Wikipedia + 新聞產出 `data/star_players.json`。沒有這個檔系統仍可運作，只是球星 Agent 會改用即時 web search 補。
 
-## 查詢
+## 啟動服務
+
+> **注意：CLI（`python main.py`）已移除，服務改為 HTTP API。**
+
+本地啟動（開發用）：
 
 ```bash
-python main.py "阿根廷這次帶哪些人？"      # → 陣容 Agent
-python main.py "巴西下一場打誰？"          # → 賽程 Agent
-python main.py "梅西這屆值得看的點？"      # → 球星 Agent
-python main.py "德國這屆最大隱憂？"        # → 看點 Agent
+uvicorn main:app --reload --port 8887
 ```
 
-不帶參數則進入互動輸入：
+呼叫 `/ask` 端點：
 
 ```bash
-python main.py
-問世界盃什麼？ 法國前鋒線有誰？
+curl -H "X-API-Key: <your-api-key>" \
+     -H "Content-Type: application/json" \
+     -d '{"question":"阿根廷這次帶哪些人？"}' \
+     http://localhost:8887/ask
 ```
+
+## 部署（Cloud Run）
+
+1. 在 GCP Secret Manager 建立以下 Secret（若尚未存在）：
+
+   ```bash
+   echo -n "$OPENAI_API_KEY"   | gcloud secrets create OPENAI_API_KEY   --data-file=-
+   echo -n "$APIFOOTBALL_KEY"  | gcloud secrets create APIFOOTBALL_KEY  --data-file=-
+   echo -n "$TAVILY_KEY"       | gcloud secrets create TAVILY_KEY       --data-file=-
+   echo -n "key1,key2"         | gcloud secrets create WC_API_KEYS      --data-file=-
+   ```
+
+2. 填入 `gcp_Dev.sh` 頂部的 `project_id`、`image_name`、`service_name`、`service_account`，然後執行：
+
+   ```bash
+   bash gcp_Dev.sh
+   ```
+
+   部署採 **單實例**（`--max-instances 1`），以確保 API-Football 每日 100 次配額的計數正確。若需水平擴展，需改用外部配額儲存（如 Redis / Firestore）。
 
 ## 即時比分與免費額度
 
