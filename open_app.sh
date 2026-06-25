@@ -18,9 +18,11 @@ SERVICE="fifa-wc-agent"
 REGION="asia-east1"
 PORT="${1:-8080}"
 
-# 被授權可存取的帳號（與 Cloud Run run.invoker IAM 一致）。
-# 若日後加了其他帳號，可在此補上，用空白分隔。
-ALLOWED_ACCOUNTS="your-account@example.com"
+# 被授權可存取的帳號（與 Cloud Run run.invoker IAM 一致），用空白分隔。
+# 從環境變數讀取，避免把個人帳號寫死在版控裡：
+#   export WC_ALLOWED_ACCOUNTS="you@example.com teammate@example.com"
+# 留空則跳過名單檢查，直接用目前 gcloud 登入帳號嘗試連線。
+ALLOWED_ACCOUNTS="${WC_ALLOWED_ACCOUNTS:-}"
 
 # --- 檢查目前登入帳號是否在授權名單內 ---
 ACCOUNT="$(gcloud config get-value account 2>/dev/null || true)"
@@ -29,15 +31,17 @@ if [ -z "$ACCOUNT" ]; then
   exit 1
 fi
 
-authorized="no"
-for a in $ALLOWED_ACCOUNTS; do
-  [ "$a" = "$ACCOUNT" ] && authorized="yes"
-done
-if [ "$authorized" != "yes" ]; then
-  echo "⚠️  目前登入帳號為 '$ACCOUNT'，不在授權名單內，連線會被 403 擋下。" >&2
-  echo "    請切換： gcloud config set account your-account@example.com" >&2
-  echo "    （或先 gcloud auth login）" >&2
-  exit 1
+if [ -n "$ALLOWED_ACCOUNTS" ]; then
+  authorized="no"
+  for a in $ALLOWED_ACCOUNTS; do
+    [ "$a" = "$ACCOUNT" ] && authorized="yes"
+  done
+  if [ "$authorized" != "yes" ]; then
+    echo "⚠️  目前登入帳號為 '$ACCOUNT'，不在 WC_ALLOWED_ACCOUNTS 名單內，連線會被 403 擋下。" >&2
+    echo "    請切換到有 run.invoker 權限的帳號： gcloud config set account <你的帳號>" >&2
+    echo "    （或先 gcloud auth login）" >&2
+    exit 1
+  fi
 fi
 
 echo "👤 帳號：$ACCOUNT"

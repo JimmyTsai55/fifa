@@ -122,7 +122,12 @@ curl -H "X-API-Key: <your-api-key>" \
 ./open_app.sh 9000      # 改用 localhost:9000
 ```
 
-腳本會先檢查目前 `gcloud` 登入帳號是否在授權名單內（預設 `your-account@example.com`，與 Cloud Run 的 `run.invoker` IAM 一致），通過才啟動 `gcloud run services proxy`。用完按 `Ctrl+C` 關閉。
+授權名單從環境變數 `WC_ALLOWED_ACCOUNTS`（空白分隔）讀取，需與 Cloud Run 的 `run.invoker` IAM 一致；腳本會先確認目前 `gcloud` 登入帳號在名單內，通過才啟動 `gcloud run services proxy`。用完按 `Ctrl+C` 關閉。
+
+```bash
+export WC_ALLOWED_ACCOUNTS="you@example.com"   # 你被授予 run.invoker 的帳號
+./open_app.sh
+```
 
 ## CI/CD（GitHub Actions）
 
