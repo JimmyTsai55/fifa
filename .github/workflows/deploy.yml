@@ -11,7 +11,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PROJECT_ID: your-project
+  # 識別性的部署設定改存於 GitHub Actions secrets，不寫死在版控裡。
+  # 需設定的 secrets：GCP_PROJECT_ID / GCP_WIF_PROVIDER / GCP_SERVICE_ACCOUNT
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-east1
   SERVICE: fifa-wc-agent
 
@@ -44,8 +46,8 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
-          workload_identity_provider: ${GCP_WIF_PROVIDER}
-          service_account: ${GCP_SERVICE_ACCOUNT}
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2

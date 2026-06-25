@@ -573,8 +573,8 @@ permissions:
   id-token: write   # ← WIF 關鍵
 - uses: google-github-actions/auth@v2
   with:
-    workload_identity_provider: .../your-provider
-    service_account: gh-deployer-sa@...iam
+    workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+    service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 - run: gcloud run deploy fifa-wc-agent ...</code></pre>
       <p class="small"><strong>Workload Identity Federation</strong>：GitHub 以 OIDC 換取 GCP 短期憑證，<em>不存任何長期金鑰</em>。</p>
     </div>
@@ -619,7 +619,7 @@ echo -n "$TAVILY_KEY"      | gcloud secrets \
    create TAVILY_KEY      --data-file=-
 echo -n "key1,key2"        | gcloud secrets \
    create WC_API_KEYS     --data-file=-</code></pre>
-      <p class="small muted">GCP 專案 <code>your-project</code> · 區域 <code>asia-east1</code> · 服務 <code>fifa-wc-agent</code>。</p>
+      <p class="small muted">GCP 專案 <code>&lt;your-project&gt;</code> · 區域 <code>asia-east1</code> · 服務 <code>fifa-wc-agent</code>。</p>
     </div>
   </div>
 </section>
