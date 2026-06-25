@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA 2026 多代理 QA 系統 — 技術簡報</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/black.min.css" id="theme">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --pitch:#0a7d4f;
+    --pitch-deep:#075a39;
+    --pitch-dark:#06281b;
+    --gold:#d8a23a;
+    --gold-soft:#e9c987;
+    --cream:#f4f2ea;
+    --ink:#10221a;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .reveal{
+    font-family:'Noto Sans TC', sans-serif;
+    font-size:30px;
+    color:var(--cream);
+  }
+  .reveal .slides section{
+    text-align:left;
+    top:0 !important;
+  }
+
+  /* backgrounds */
+  .reveal .backgrounds{ background:var(--pitch-dark); }
+  .reveal-viewport{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(216,162,58,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(10,125,79,.35), transparent 60%),
+      var(--pitch-dark);
+  }
+
+  /* headings */
+  .reveal h1,.reveal h2,.reveal h3{
+    font-family:'Noto Serif TC', serif;
+    color:var(--cream);
+    text-transform:none;
+    letter-spacing:.5px;
+    line-height:1.15;
+    margin-bottom:.4em;
+  }
+  .reveal h1{ font-size:2.0em; }
+  .reveal h2{
+    font-size:1.45em;
+    border-bottom:3px solid var(--gold);
+    display:inline-block;
+    padding-bottom:.15em;
+  }
+  .reveal h3{ font-size:1.05em; color:var(--gold-soft); }
+
+  .reveal section > h2:first-child{ margin-top:.1em; }
+
+  .reveal strong{ color:var(--gold-soft); }
+  .reveal em{ color:var(--gold); font-style:normal; }
+  .reveal a{ color:var(--gold); }
+
+  .kicker{
+    font-family:var(--mono);
+    font-size:.5em;
+    letter-spacing:.35em;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-bottom:1em;
+  }
+
+  /* lists */
+  .reveal ul, .reveal ol{ margin-left:1em; }
+  .reveal li{ margin:.32em 0; line-height:1.35; }
+  .reveal li::marker{ color:var(--gold); }
+
+  /* code */
+  .reveal pre{
+    width:100%;
+    font-size:.46em;
+    box-shadow:0 10px 30px rgba(0,0,0,.45);
+    border:1px solid rgba(216,162,58,.25);
+    border-radius:10px;
+    margin:.5em 0;
+  }
+  .reveal pre code{
+    font-family:var(--mono);
+    padding:18px 20px;
+    border-radius:10px;
+    max-height:520px;
+    line-height:1.45;
+  }
+  .reveal code:not(pre code){
+    font-family:var(--mono);
+    background:rgba(216,162,58,.14);
+    color:var(--gold-soft);
+    padding:.08em .4em;
+    border-radius:5px;
+    font-size:.9em;
+  }
+
+  /* tables */
+  .reveal table{ font-size:.62em; margin:.3em 0; border-collapse:collapse; width:100%; }
+  .reveal table th{
+    background:var(--pitch);
+    color:var(--cream);
+    font-family:'Noto Sans TC';
+    font-weight:700;
+    border:none;
+    padding:.45em .7em;
+  }
+  .reveal table td{
+    border-bottom:1px solid rgba(216,162,58,.18);
+    padding:.4em .7em;
+    color:#e8e6dd;
+  }
+  .reveal table tr:nth-child(even) td{ background:rgba(255,255,255,.03); }
+
+  /* layout helpers */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:1.1em; align-items:start; }
+  .cols3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:.9em; align-items:start; }
+  .card{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(216,162,58,.28);
+    border-radius:12px;
+    padding:.7em .85em;
+  }
+  .card h3{ margin:.1em 0 .3em; }
+  .small{ font-size:.74em; color:#cfd6cf; }
+  .muted{ color:#9fb0a4; }
+
+  /* stat chips */
+  .stats{ display:flex; gap:1em; flex-wrap:wrap; margin-top:.4em; }
+  .stat{
+    flex:1 1 140px;
+    background:linear-gradient(160deg, rgba(10,125,79,.55), rgba(6,40,27,.55));
+    border:1px solid rgba(216,162,58,.4);
+    border-radius:14px;
+    padding:.7em .8em;
+    text-align:center;
+  }
+  .stat b{
+    display:block;
+    font-family:'Anton', sans-serif;
+    font-size:2.0em;
+    color:var(--gold);
+    line-height:1;
+  }
+  .stat span{ font-size:.72em; color:#dfe6df; }
+
+  /* tag cloud */
+  .tags{ display:flex; flex-wrap:wrap; gap:.5em; margin-top:1.2em; justify-content:center; }
+  .tags span{
+    font-family:var(--mono);
+    font-size:.5em;
+    background:rgba(216,162,58,.12);
+    border:1px solid rgba(216,162,58,.35);
+    color:var(--gold-soft);
+    padding:.4em .8em;
+    border-radius:999px;
+  }
+
+  /* flow / pipeline boxes */
+  .flow{ display:flex; align-items:center; gap:.5em; flex-wrap:wrap; font-size:.7em; }
+  .node{
+    background:rgba(10,125,79,.5);
+    border:1px solid var(--gold);
+    border-radius:10px;
+    padding:.45em .7em;
+    text-align:center;
+  }
+  .node.alt{ background:rgba(216,162,58,.2); }
+  .arrow{ color:var(--gold); font-size:1.3em; }
+
+  /* cover */
+  #cover{ text-align:center; }
+  #cover .crest{
+    font-family:'Anton';
+    font-size:1.1em;
+    letter-spacing:.4em;
+    color:var(--gold);
+  }
+  #cover h1{
+    font-size:2.5em;
+    margin:.2em 0 .1em;
+    background:linear-gradient(180deg,#fff,var(--gold-soft));
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  #cover .sub{ font-size:.85em; color:#cdd6cd; max-width:18em; margin:0 auto; }
+
+  /* footer */
+  .reveal .slide-number{ background:transparent; color:var(--gold); font-family:var(--mono); }
+  .foot{
+    position:fixed; bottom:14px; left:24px;
+    font-family:var(--mono); font-size:13px; color:rgba(216,162,58,.55);
+    z-index:30;
+  }
+
+  .reveal .progress{ color:var(--gold); height:5px; }
+
+  .legend{ font-size:.6em; color:var(--muted); margin-top:.6em; }
+  .pill{ display:inline-block; background:var(--pitch); color:#fff; border-radius:6px; padding:.05em .5em; font-size:.85em; font-family:var(--mono); }
+</style>
+</head>
+<body>
+<div class="foot">FIFA 2026 · Multi-Agent QA · 技術簡報</div>
+<div class="reveal"><div class="slides">
+
+<!-- 1. COVER -->
+<section data-background-gradient="linear-gradient(160deg,#06281b,#075a39 55%,#06281b)">
+  <div id="cover">
+    <div class="crest">★ FIFA WORLD CUP 2026 ★</div>
+    <h1>世界盃多代理<br>問答系統</h1>
+    <p class="sub">以 Clean Architecture 打造、部署於 GCP Cloud Run 的多代理 AI 服務。從架構、AI 設計、資料庫到 CI/CD 的完整技術剖析。</p>
+    <div class="tags">
+      <span>OpenAI Agents SDK</span><span>FastAPI</span><span>Clean Architecture</span>
+      <span>SQLite + WAL</span><span>Cloud Run</span><span>GitHub Actions</span>
+      <span>Workload Identity</span><span>Claude Code</span><span>Superpowers</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2. OVERVIEW -->
+<section>
+  <div class="kicker">01 · Overview</div>
+  <h2>專案總覽</h2>
+  <div class="cols">
+    <div>
+      <p><strong>它是什麼</strong><br>一個回答「2026 世界盃」相關問題的 REST API：陣容、賽程、球星、看點。</p>
+      <p><strong>怎麼做到</strong><br>使用者問題 → <em>分流代理</em> 判斷意圖 → handoff 給 4 個專家代理 → 呼叫工具拿真實足球資料 → 由 LLM 統整自然語言回答。</p>
+      <p><strong>設計重點</strong><br>嚴守 Clean Architecture（Ports &amp; Adapters）、外部 API 免費額度下的快取/限流、無金鑰自動部署。</p>
+    </div>
+    <div>
+      <div class="stats">
+        <div class="stat"><b>5</b><span>代理 (1 分流 + 4 專家)</span></div>
+        <div class="stat"><b>10</b><span>Function Tools</span></div>
+      </div>
+      <div class="stats" style="margin-top:1em">
+        <div class="stat"><b>4</b><span>HTTP 端點</span></div>
+        <div class="stat"><b>65</b><span>單元測試 (全 mock)</span></div>
+      </div>
+      <p class="small muted" style="margin-top:1em">後端 ~1,200 行 Python · 測試 694 行 · CI 測 Python 3.12 / 3.13 · 單檔前端 339 行</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3. ARCHITECTURE -->
+<section>
+  <div class="kicker">02 · Architecture</div>
+  <h2>整體架構：Clean Architecture / Ports &amp; Adapters</h2>
+  <div class="cols">
+    <div>
+      <table>
+        <tr><th>層</th><th>位置</th></tr>
+        <tr><td>API 入口</td><td><code>api/v1/routes.py</code>, <code>main.py</code></td></tr>
+        <tr><td>Use Cases</td><td><code>use_cases/answer_question.py</code></td></tr>
+        <tr><td>Services</td><td><code>services/qa_service.py</code> 等</td></tr>
+        <tr><td>Protocols<br>(介面)</td><td><code>protocols/*.py</code></td></tr>
+        <tr><td>Adapters<br>(實作)</td><td><code>adapters/*.py</code></td></tr>
+        <tr><td>Core<br>(組裝根)</td><td><code>core/container.py</code>, <code>config.py</code></td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>依賴方向（依賴反轉）</h3>
+      <div class="flow" style="flex-direction:column; align-items:stretch">
+        <div class="node">API → Use Cases → Services</div>
+        <div class="arrow" style="text-align:center">↓ 依賴</div>
+        <div class="node alt">Protocols（純契約，無實作）</div>
+        <div class="arrow" style="text-align:center">↑ 被實作</div>
+        <div class="node">Adapters（openai-agents / httpx / sqlite3）</div>
+      </div>
+      <p class="small" style="margin-top:.8em">內層只認得 <em>介面</em>，外部 SDK 全在最外層；<code>core/container.py</code> 於啟動時注入實作。可獨立替換 LLM、資料來源、儲存後端。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. REQUEST LIFECYCLE -->
+<section>
+  <div class="kicker">03 · Request Lifecycle</div>
+  <h2>一個問題的端到端旅程</h2>
+  <ol style="font-size:.82em">
+    <li><code>POST /ask</code> 帶 <code>AskRequest{question}</code></li>
+    <li><code>deps.require_api_key</code> 驗證 <span class="pill">X-API-Key</span>（缺/錯 → 401）</li>
+    <li><code>container.build_use_case()</code> 組裝代理、協定實作、配額服務</li>
+    <li><code>AnswerQuestionUseCase.execute()</code> → <code>QAService.answer()</code>（anyio 轉非同步）</li>
+    <li><code>Runner.run_sync(triage, question)</code> 啟動代理</li>
+    <li><strong>Triage 分流</strong> → handoff 給 4 專家之一</li>
+    <li>專家執行 <em>function tools</em> → 觸發 <code>FootballDataProtocol</code></li>
+    <li>Adapter：查快取(TTL) → 過期才打 API → 限流(10/分) → 記配額</li>
+    <li>LLM 統整 → <code>final_output</code></li>
+    <li><code>200</code> 回 <code>AskResponse{answer, model}</code></li>
+  </ol>
+  <p class="legend">錯誤映射：401 驗證失敗 · 422 輸入無效 · 429 配額用盡 · 502 上游 API 錯誤</p>
+</section>
+
+<!-- 5. AI MULTI-AGENT (1) topology -->
+<section>
+  <div class="kicker">04 · AI 多代理設計（一）</div>
+  <h2>Triage 分流 + 4 專家 Handoff</h2>
+  <div class="flow" style="justify-content:center; margin:.5em 0">
+    <div class="node alt">使用者問題</div>
+    <span class="arrow">→</span>
+    <div class="node">Triage 分流代理<br><span class="small muted">判斷意圖，不自己回答</span></div>
+  </div>
+  <div class="cols" style="margin-top:.6em">
+    <div class="card"><h3>Squad 陣容</h3><span class="small">26 人名單、位置、隊長、背號</span></div>
+    <div class="card"><h3>Fixture 賽程</h3><span class="small">賽程、比分、排名、下一場</span></div>
+  </div>
+  <div class="cols" style="margin-top:.6em">
+    <div class="card"><h3>Star 球星</h3><span class="small">球星分析、老將/新星、亮點</span></div>
+    <div class="card"><h3>Insight 看點</h3><span class="small">隱憂、傷兵、戰術分析</span></div>
+  </div>
+  <p class="small muted" style="margin-top:.7em">透過 OpenAI Agents SDK 內建 <code>handoffs</code> 機制路由；分流代理本身不帶工具，純做意圖分類或反問澄清。</p>
+</section>
+
+<!-- 6. AI MULTI-AGENT (2) prompts + tools -->
+<section>
+  <div class="kicker">04 · AI 多代理設計（二）</div>
+  <h2>XML 結構化 System Prompt + 工具對照</h2>
+  <pre><code class="language-xml" data-trim>&lt;role&gt;你是 2026 世界盃問答系統的分流員。&lt;/role&gt;
+&lt;rules&gt;
+  &lt;rule&gt;判斷問題類別，handoff 給對應專家，不要自己回答。&lt;/rule&gt;
+  &lt;rule&gt;名單/陣容 → Squad；賽程/比分/排名 → Fixture；
+        球星/老將/新星 → Star；看點/隱憂/戰術 → Insight。&lt;/rule&gt;
+&lt;/rules&gt;
+&lt;output_format&gt;只做 handoff 或一句澄清提問。&lt;/output_format&gt;</code></pre>
+  <table>
+    <tr><th>代理</th><th>關鍵工具</th></tr>
+    <tr><td>Squad</td><td><code>resolve_entity · tool_find_team · tool_get_squad · tool_get_player_stats</code></td></tr>
+    <tr><td>Fixture</td><td><code>tool_get_fixtures · tool_get_standings · tool_get_live</code></td></tr>
+    <tr><td>Star</td><td><code>get_star_profile · tool_get_player_stats · web_search</code></td></tr>
+    <tr><td>Insight</td><td><code>tool_get_injuries · web_search</code></td></tr>
+  </table>
+  <p class="legend">所有 5 個 prompt 均採 <code>&lt;role&gt; / &lt;rules&gt; / &lt;output_format&gt;</code> XML 標籤結構 · 模型 <code>gpt-4o-mini</code>（可由 <code>OPENAI_DEFAULT_MODEL</code> 設定）</p>
+</section>
+
+<!-- 7. AI MULTI-AGENT (3) function tools + DI -->
+<section>
+  <div class="kicker">04 · AI 多代理設計（三）</div>
+  <h2>Function Tools 與依賴注入</h2>
+  <div class="cols">
+    <div>
+      <pre><code class="language-python" data-trim># adapters/agent_tools.py
+@function_tool(failure_error_function=None)
+def tool_find_team(name: str) -&gt; int:
+    """球隊拉丁名 → team_id；查無回 0。"""
+    return current_football().find_team_id(name) or 0</code></pre>
+      <pre><code class="language-python" data-trim># core/container.py — 啟動時綁定實作
+agent_tools.bind_football(football)
+#   ↑ 注入 FootballDataProtocol</code></pre>
+    </div>
+    <div>
+      <h3>為什麼這樣設計</h3>
+      <ul class="small">
+        <li>工具只依賴 <em>協定</em>，不認得 SQLite / httpx</li>
+        <li>真正的資料來源（<code>ApiFootballAdapter</code>）在組裝根注入</li>
+        <li>測試時可注入 mock，<strong>65 個測試全程不需金鑰</strong></li>
+      </ul>
+      <h3>編排核心</h3>
+      <pre><code class="language-python" data-trim># openai_agents_adapter.py
+def answer(self, q: str) -&gt; str:
+    return Runner.run_sync(
+        self._agent, q
+    ).final_output</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 8. EXTERNAL APIs -->
+<section>
+  <div class="kicker">05 · External Services</div>
+  <h2>外部 API 整合</h2>
+  <table>
+    <tr><th>服務</th><th>用途</th><th>限額</th><th>金鑰</th></tr>
+    <tr><td><strong>OpenAI API</strong></td><td>Agents SDK（gpt-4o-mini）做分流與回答統整</td><td>—</td><td><code>OPENAI_API_KEY</code></td></tr>
+    <tr><td><strong>API-Football</strong></td><td>球隊、陣容、賽程、排名、傷兵</td><td>100/天 · 10/分</td><td><code>APIFOOTBALL_KEY</code></td></tr>
+    <tr><td><strong>Tavily</strong></td><td>網路新聞搜尋（僅英文）</td><td>1,000/月</td><td><code>TAVILY_KEY</code></td></tr>
+  </table>
+  <p class="small" style="margin-top:1em">免費額度緊張是核心限制 → 推動了下兩張的 <em>快取 + 限流 + 配額</em> 設計，以及部署時的 <em>單實例</em> 決策（確保配額計數正確）。</p>
+  <p class="small muted">中文隊名/球員名先經 <code>resolve_entity</code>（<code>data/aliases.json</code>）轉成拉丁標準名再查 API。</p>
+</section>
+
+<!-- 9. DATABASE -->
+<section>
+  <div class="kicker">06 · Database</div>
+  <h2>資料庫設計：SQLite + WAL</h2>
+  <div class="cols">
+    <div>
+      <pre><code class="language-sql" data-trim>-- db/schema.py
+CREATE TABLE cache_meta (
+  cache_key    TEXT PRIMARY KEY,
+  fetched_at   REAL NOT NULL,   -- Unix 時間戳
+  payload_json TEXT NOT NULL    -- API 回應 JSON
+);
+
+CREATE TABLE kv (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL           -- 配額狀態等
+);</code></pre>
+    </div>
+    <div>
+      <h3>設計取捨</h3>
+      <ul class="small" style="font-size:.66em">
+        <li><strong>只有兩張表</strong>：API 回應整包以 <em>JSON blob</em> 存放，key 如 <code>squad:1</code></li>
+        <li><strong>WAL 模式</strong>：支援併發讀（concurrency 50）</li>
+        <li><strong>RLock</strong>：執行緒安全存取快取/配額</li>
+        <li><strong>無 ORM、無 migration</strong>：原生 <code>sqlite3</code></li>
+      </ul>
+      <p class="small muted" style="font-size:.62em">適配器 <code>sqlite_store_adapter.py</code> 同時實作 <code>CacheStoreProtocol</code> 與 <code>QuotaStoreProtocol</code>，可替換後端。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10. CACHE & QUOTA -->
+<section>
+  <div class="kicker">07 · Cache &amp; Quota</div>
+  <h2>快取、限流與配額策略</h2>
+  <div class="cols">
+    <div>
+      <h3>TTL 快取（含降級）</h3>
+      <table>
+        <tr><th>資料</th><th>TTL</th></tr>
+        <tr><td>teams</td><td>30 天</td></tr>
+        <tr><td>squad</td><td>1 天</td></tr>
+        <tr><td>fixtures</td><td>6 小時</td></tr>
+        <tr><td>standings</td><td>1 小時</td></tr>
+        <tr><td>injuries</td><td>3 小時</td></tr>
+      </table>
+      <p class="small muted">API 失敗時 <code>get_or_fetch</code> 退回舊快取，服務不中斷。</p>
+    </div>
+    <div>
+      <pre><code class="language-python" data-trim># db/quota.py — 權杖桶限流
+class RateLimiter:
+    def __init__(self, max_per_min=10):
+        self._hits = deque()
+    def allow(self) -&gt; bool:
+        # 清掉 60s 前的紀錄，&lt;10 才放行
+        return len(self._hits) &lt; self.max</code></pre>
+      <ul class="small">
+        <li>每日配額：讀 <code>x-ratelimit-requests-remaining</code> 標頭，存進 <code>kv</code></li>
+        <li>UTC 午夜重置 <code>quota_date</code></li>
+        <li>用盡 → 拋 <code>QuotaExhausted</code> → HTTP <strong>429</strong></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 11. BACKEND STACK -->
+<section>
+  <div class="kicker">08 · Backend Stack</div>
+  <h2>後端技術棧</h2>
+  <div class="cols">
+    <!-- 左：分層技術棧 -->
+    <div>
+      <h3 style="margin-bottom:.4em">分層技術棧</h3>
+      <div style="display:flex; flex-direction:column; gap:.45em; font-size:.62em">
+        <div class="card" style="padding:.45em .7em; display:flex; align-items:center; gap:.6em">
+          <span style="font-size:1.5em">🌐</span>
+          <div><strong>Web 服務</strong>　<code>fastapi</code> · <code>uvicorn[standard]</code></div>
+        </div>
+        <div class="card" style="padding:.45em .7em; display:flex; align-items:center; gap:.6em">
+          <span style="font-size:1.5em">🤖</span>
+          <div><strong>AI 代理</strong>　<code>openai-agents</code>（Agent/Runner/tool）</div>
+        </div>
+        <div class="card" style="padding:.45em .7em; display:flex; align-items:center; gap:.6em">
+          <span style="font-size:1.5em">🔌</span>
+          <div><strong>外部整合</strong>　<code>httpx</code>（API-Football · Tavily）</div>
+        </div>
+        <div class="card" style="padding:.45em .7em; display:flex; align-items:center; gap:.6em">
+          <span style="font-size:1.5em">⚙️</span>
+          <div><strong>設定 / 併發</strong>　<code>pydantic-settings</code> · <code>anyio</code></div>
+        </div>
+        <div class="card" style="padding:.45em .7em; display:flex; align-items:center; gap:.6em">
+          <span style="font-size:1.5em">✅</span>
+          <div><strong>測試</strong>　<code>pytest</code></div>
+        </div>
+      </div>
+    </div>
+    <!-- 右：例外 → HTTP 狀態碼徽章 -->
+    <div>
+      <h3 style="margin-bottom:.4em">例外 → HTTP 對照</h3>
+      <div style="display:flex; flex-direction:column; gap:.5em; font-size:.66em">
+        <div style="display:flex; align-items:center; gap:.7em">
+          <span style="font-family:'Anton'; font-size:1.7em; color:#e9c987; min-width:1.8em">401</span>
+          <div><strong>驗證失敗</strong><br><span class="muted">X-API-Key 無效</span></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:.7em">
+          <span style="font-family:'Anton'; font-size:1.7em; color:#e0b96a; min-width:1.8em">422</span>
+          <div><strong>輸入無效</strong><br><span class="muted">問題空白／過長（ValueError）</span></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:.7em">
+          <span style="font-family:'Anton'; font-size:1.7em; color:#d88a4a; min-width:1.8em">429</span>
+          <div><strong>配額用盡</strong><br><span class="muted">QuotaExhausted</span></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:.7em">
+          <span style="font-family:'Anton'; font-size:1.7em; color:#d35f5f; min-width:1.8em">502</span>
+          <div><strong>上游錯誤</strong><br><span class="muted">RuntimeError（API 失敗）</span></div>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:.7em; font-size:.6em">FastAPI 自動產生 <code>/docs</code>、<code>/openapi.json</code>；另有 <code>/healthz</code>。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12. FRONTEND -->
+<section>
+  <div class="kicker">09 · Frontend</div>
+  <h2>前端：單檔聊天介面</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li><strong>零建置</strong>：單一 <code>static/chat.html</code>（339 行），純 vanilla JS</li>
+        <li>世界盃主題：草皮綠 + 金 + 米白，Google Fonts（Anton / Noto TC）</li>
+        <li>歡迎頁 4 張建議問題卡對應 4 個專家</li>
+        <li>由 FastAPI 以 <code>FileResponse</code> 在 <code>/</code> 直接提供</li>
+      </ul>
+      <h3>為何有 <code>/chat</code> 端點</h3>
+      <p class="small">前端呼叫 <code>/chat</code> <em>免帶金鑰</em>——金鑰留在伺服器端，避免暴露於瀏覽器；<code>/ask</code> 則保留給程式化呼叫（需 X-API-Key）。</p>
+    </div>
+    <div>
+      <pre><code class="language-javascript" data-trim>async function submit() {
+  const r = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question })
+  });
+  const data = await r.json();
+  render(data.answer);
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 13. CI -->
+<section>
+  <div class="kicker">10 · CI/CD（一）</div>
+  <h2>持續整合：GitHub Actions</h2>
+  <pre><code class="language-yaml" data-trim># .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ matrix.python-version }}", cache: pip }
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q   # 65 測試 · 全 mock · 約 1 秒</code></pre>
+  <p class="small muted">每次 push / PR 觸發；雙 Python 版本矩陣；測試全程不需任何 API 金鑰（依賴注入 + mock）。</p>
+</section>
+
+<!-- 14. CD -->
+<section>
+  <div class="kicker">10 · CI/CD（二）</div>
+  <h2>持續部署：WIF + Cloud Run</h2>
+  <div class="cols">
+    <div>
+      <pre><code class="language-yaml" data-trim># deploy.yml（push main，test 通過後）
+permissions:
+  id-token: write   # ← WIF 關鍵
+- uses: google-github-actions/auth@v2
+  with:
+    workload_identity_provider: .../your-provider
+    service_account: gh-deployer-sa@...iam
+- run: gcloud run deploy fifa-wc-agent ...</code></pre>
+      <p class="small"><strong>Workload Identity Federation</strong>：GitHub 以 OIDC 換取 GCP 短期憑證，<em>不存任何長期金鑰</em>。</p>
+    </div>
+    <div>
+      <h3>關鍵部署參數</h3>
+      <ul class="small">
+        <li><code>--source .</code>：由原始碼自動建置（Buildpacks）</li>
+        <li><code>--max-instances 1</code>：<em>單實例</em>，確保每日配額計數正確</li>
+        <li><code>--update-secrets</code>：從 Secret Manager 注入 4 把金鑰</li>
+        <li><code>--concurrency 50 · --timeout 180s</code></li>
+        <li><code>--no-allow-unauthenticated</code>：<em>私有服務</em>，IAM 層擋匿名請求</li>
+        <li>煙霧測試：匿名 <code>curl /</code> 預期 <strong>403</strong>（接受 2xx/401/403=已上線且鎖定生效）</li>
+      </ul>
+      <p class="small muted"><code>concurrency: deploy-cloud-run</code> 群組避免重疊部署。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 15. CONTAINER & DEPLOY -->
+<section>
+  <div class="kicker">11 · Container</div>
+  <h2>容器化與密鑰</h2>
+  <div class="cols">
+    <div>
+      <pre><code class="language-docker" data-trim># Dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 PORT=8887
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["sh","-c","uvicorn main:app \
+     --host 0.0.0.0 --port ${PORT:-8887}"]</code></pre>
+    </div>
+    <div>
+      <h3>建立 GCP Secrets（一次性）</h3>
+      <pre><code class="language-bash" data-trim>echo -n "$OPENAI_API_KEY"  | gcloud secrets \
+   create OPENAI_API_KEY  --data-file=-
+echo -n "$APIFOOTBALL_KEY" | gcloud secrets \
+   create APIFOOTBALL_KEY --data-file=-
+echo -n "$TAVILY_KEY"      | gcloud secrets \
+   create TAVILY_KEY      --data-file=-
+echo -n "key1,key2"        | gcloud secrets \
+   create WC_API_KEYS     --data-file=-</code></pre>
+      <p class="small muted">GCP 專案 <code>your-project</code> · 區域 <code>asia-east1</code> · 服務 <code>fifa-wc-agent</code>。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 16. DEVELOPED WITH CLAUDE CODE -->
+<section>
+  <div class="kicker">12 · Built with Claude Code</div>
+  <h2>用 Claude Code 開發（Superpowers 工作流）</h2>
+  <div class="flow" style="justify-content:center; margin:.4em 0 .8em">
+    <div class="node alt">brainstorming</div><span class="arrow">→</span>
+    <div class="node alt">writing-plans</div><span class="arrow">→</span>
+    <div class="node">subagent 開發</div><span class="arrow">→</span>
+    <div class="node">code-review</div><span class="arrow">→</span>
+    <div class="node">verification</div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>開發階段用到的能力</h3>
+      <ul class="small">
+        <li><strong>clean-arch skill</strong>：指導 Ports &amp; Adapters 分層、協定/適配器結構</li>
+        <li><strong>brainstorming → writing-plans</strong>：每階段先寫 spec 再寫 plan（見 <code>docs/superpowers/</code>）</li>
+        <li><strong>subagent 驅動開發</strong>：分派子代理產生代理、schema、適配器</li>
+        <li><strong>code-review / verification</strong>：合併前審查與測試把關</li>
+      </ul>
+    </div>
+    <div>
+      <h3>設計文件留痕</h3>
+      <ul class="small">
+        <li><code>specs/…multi-agent-design.md</code>（v1 代理）</li>
+        <li><code>specs/…fastapi-clean-arch-design.md</code>（v2 重構）</li>
+        <li><code>specs/…chat-frontend-design.md</code>（v3 前端）</li>
+      </ul>
+      <h3>用 subagent 產資料</h3>
+      <p class="small">星球員老將/新星分類與看點故事不在 API 內 → 依 <code>build_stars.md</code> 開 subagent 用 Wikipedia + 新聞產出 <code>data/star_players.json</code>。</p>
+      <p class="small muted"><code>.claude/settings.local.json</code> 管理 bash/讀檔權限白名單。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 17. COMMAND CHEAT SHEET -->
+<section>
+  <div class="kicker">13 · Commands</div>
+  <h2>執行指令速查表</h2>
+  <div class="cols">
+    <div>
+      <h3>本機開發</h3>
+      <pre><code class="language-bash" data-trim>python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # 填 4 把金鑰
+
+# 初始化 DB（首次，約 5 分鐘）
+python init_db.py
+
+# 啟動後端
+uvicorn main:app --reload --port 8887
+# → http://localhost:8887/  (聊天)
+# → http://localhost:8887/docs (API)</code></pre>
+      <h3>測試</h3>
+      <pre><code class="language-bash" data-trim>pytest -q   # 65 測試，全 mock、免金鑰</code></pre>
+    </div>
+    <div>
+      <h3>呼叫 API</h3>
+      <pre><code class="language-bash" data-trim>curl -H "X-API-Key: &lt;key&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"阿根廷帶哪些人？"}' \
+  http://localhost:8887/ask</code></pre>
+      <h3>容器 / 部署</h3>
+      <pre><code class="language-bash" data-trim># 自動：push main → CI 通過 → 自動部署
+git push origin main
+
+# 手動部署（範本）
+cp gcp_Dev.sh.example gcp_Dev.sh
+bash gcp_Dev.sh
+
+# 由原始碼直接部署
+gcloud run deploy fifa-wc-agent \
+  --source . --region asia-east1 \
+  --max-instances 1 --port 8887</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 18. SUMMARY -->
+<section data-background-gradient="linear-gradient(160deg,#06281b,#075a39 55%,#06281b)">
+  <div class="kicker">14 · Wrap-up</div>
+  <h2>技術亮點回顧</h2>
+  <div class="cols">
+    <div>
+      <ul class="small">
+        <li><strong>多代理</strong>：Triage 分流 + 4 專家 handoff，XML 結構化 prompt</li>
+        <li><strong>Clean Architecture</strong>：協定/適配器分離，LLM 與資料源皆可替換</li>
+        <li><strong>韌性設計</strong>：TTL 快取降級 + 權杖桶限流 + 每日配額</li>
+      </ul>
+    </div>
+    <div>
+      <ul class="small">
+        <li><strong>無金鑰 CI/CD</strong>：WIF + Cloud Run，push main 即上線</li>
+        <li><strong>單實例</strong>取捨：換取精準配額計數</li>
+        <li><strong>Claude Code</strong> 全程：brainstorm → plan → subagent → review</li>
+      </ul>
+    </div>
+  </div>
+  <div class="tags" style="margin-top:1.4em">
+    <span>5 代理</span><span>10 工具</span><span>Clean Arch</span><span>SQLite+WAL</span>
+    <span>FastAPI</span><span>Cloud Run</span><span>WIF</span><span>gpt-4o-mini</span>
+  </div>
+  <p style="text-align:center; margin-top:1.2em; font-family:'Noto Serif TC'; color:var(--gold-soft)">謝謝聆聽 · Q &amp; A</p>
+</section>
+
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/notes/notes.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash:true,
+    slideNumber:'c/t',
+    transition:'slide',
+    backgroundTransition:'fade',
+    width:1280, height:720,
+    margin:0.06,
+    plugins:[ RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>
